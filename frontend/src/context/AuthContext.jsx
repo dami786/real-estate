@@ -8,12 +8,24 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    let token = null;
+    try {
+      token = localStorage.getItem('token');
+    } catch {
+      setLoading(false);
+      return;
+    }
     if (token) {
       api
         .getMe()
         .then((data) => setUser(data.user))
-        .catch(() => localStorage.removeItem('token'))
+        .catch(() => {
+          try {
+            localStorage.removeItem('token');
+          } catch {
+            /* ignore */
+          }
+        })
         .finally(() => setLoading(false));
     } else {
       setLoading(false);
@@ -22,20 +34,32 @@ export function AuthProvider({ children }) {
 
   const login = async (email, password) => {
     const data = await api.login(email, password);
-    localStorage.setItem('token', data.token);
+    try {
+      localStorage.setItem('token', data.token);
+    } catch {
+      /* ignore */
+    }
     setUser(data.user);
     return data.user;
   };
 
   const register = async (body) => {
     const data = await api.register(body);
-    localStorage.setItem('token', data.token);
+    try {
+      localStorage.setItem('token', data.token);
+    } catch {
+      /* ignore */
+    }
     setUser(data.user);
     return data.user;
   };
 
   const logout = () => {
-    localStorage.removeItem('token');
+    try {
+      localStorage.removeItem('token');
+    } catch {
+      /* ignore */
+    }
     setUser(null);
   };
 
