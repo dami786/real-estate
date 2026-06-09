@@ -1,4 +1,4 @@
-const API = '/api';
+const API = import.meta.env.VITE_API_URL || '/api';
 
 const getToken = () => localStorage.getItem('token');
 
@@ -7,11 +7,15 @@ async function request(path, options = {}) {
   const token = getToken();
   if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API}${path}`, { ...options, headers });
-  const data = await res.json().catch(() => ({}));
-
-  if (!res.ok) throw new Error(data.message || 'Request failed');
-  return data;
+  try {
+    const res = await fetch(`${API}${path}`, { ...options, headers });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || 'Request failed');
+    return data;
+  } catch (err) {
+    if (err instanceof TypeError) throw new Error('Unable to reach server. Please try again later.');
+    throw err;
+  }
 }
 
 export const api = {
