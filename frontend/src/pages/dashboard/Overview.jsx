@@ -2,9 +2,13 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
+import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
 import { formatMoney, statusLabel, statusColors } from '../../utils/format';
+import { REVENUE_MODEL } from '../../data/business';
+
+const planMap = { basic: 'Starter', pro: 'Growth', enterprise: 'Enterprise' };
 
 export default function Overview() {
   const { user } = useAuth();
@@ -20,6 +24,7 @@ export default function Overview() {
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const currentPlan = REVENUE_MODEL.subscription.find((p) => p.name === planMap[user?.plan]);
 
   return (
     <DashboardLayout title="Overview">
@@ -68,12 +73,12 @@ export default function Overview() {
         <div className="space-y-6">
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <h3 className="font-semibold">Your Plan</h3>
-            <p className="text-2xl font-bold mt-2 capitalize">{user?.plan} Plan</p>
+            <p className="text-2xl font-bold mt-2">{currentPlan?.name || user?.plan} Plan</p>
             <p className="text-sm text-gray-500">{user?.leadsRemaining} leads remaining</p>
             <ul className="mt-4 space-y-2 text-sm text-gray-600">
-              <li>30 leads/month</li>
-              <li>Priority support</li>
-              <li>Advanced filters</li>
+              {(currentPlan?.features || []).slice(0, 3).map((f) => (
+                <li key={f}>{f}</li>
+              ))}
             </ul>
             <Link to="/dashboard/pricing" className="mt-4 inline-block text-sm font-medium hover:underline">Upgrade Plan →</Link>
           </div>
@@ -94,6 +99,8 @@ export default function Overview() {
           </div>
         </div>
       </div>
+
+      <AttomPropertyFeed variant="dashboard" className="mt-8" />
     </DashboardLayout>
   );
 }

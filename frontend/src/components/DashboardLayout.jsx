@@ -46,8 +46,9 @@ export default function DashboardLayout({ children, title, panel = 'buyer' }) {
   const panelLabel = panel === 'admin' ? 'ADMIN PANEL' : panel === 'team' ? 'TEAM PANEL' : 'INVESTOR PANEL';
 
   useEffect(() => {
+    if (panel !== 'buyer') return;
     api.getNotifications().then((n) => setNotifCount(n.filter((x) => !x.read).length)).catch(() => {});
-  }, [location.pathname]);
+  }, [location.pathname, panel]);
 
   const initials = user?.name?.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase();
 
@@ -129,14 +130,16 @@ export default function DashboardLayout({ children, title, panel = 'buyer' }) {
         <header className="bg-white border-b border-gray-100 px-8 py-4 flex items-center justify-between sticky top-0 z-30">
           <h2 className="text-sm text-gray-500">{title}</h2>
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate('/dashboard/notifications')} className="relative p-2 hover:bg-gray-50 rounded-lg">
-              <Bell size={20} />
-              {notifCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
-                  {notifCount}
-                </span>
-              )}
-            </button>
+            {panel === 'buyer' && (
+              <button onClick={() => navigate('/dashboard/notifications')} className="relative p-2 hover:bg-gray-50 rounded-lg">
+                <Bell size={20} />
+                {notifCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 bg-black text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center">
+                    {notifCount}
+                  </span>
+                )}
+              </button>
+            )}
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-xs font-bold">
                 {initials}

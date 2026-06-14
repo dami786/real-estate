@@ -4,6 +4,7 @@ import Home from './pages/Home';
 import Auth from './pages/Auth';
 import Overview from './pages/dashboard/Overview';
 import BrowseLeads from './pages/dashboard/BrowseLeads';
+import LeadDetail from './pages/dashboard/LeadDetail';
 import MyLeads from './pages/dashboard/MyLeads';
 import Favourites from './pages/dashboard/Favourites';
 import Pricing from './pages/dashboard/Pricing';
@@ -30,6 +31,7 @@ export default function App() {
 
       <Route path="/dashboard" element={<ProtectedRoute roles={['buyer']}><Overview /></ProtectedRoute>} />
       <Route path="/leads" element={<ProtectedRoute roles={['buyer']}><BrowseLeads /></ProtectedRoute>} />
+      <Route path="/leads/:id" element={<ProtectedRoute roles={['buyer', 'admin', 'team']}><LeadDetail /></ProtectedRoute>} />
       <Route path="/dashboard/my-leads" element={<ProtectedRoute roles={['buyer']}><MyLeads /></ProtectedRoute>} />
       <Route path="/dashboard/favourites" element={<ProtectedRoute roles={['buyer']}><Favourites /></ProtectedRoute>} />
       <Route path="/dashboard/pricing" element={<ProtectedRoute roles={['buyer']}><Pricing /></ProtectedRoute>} />

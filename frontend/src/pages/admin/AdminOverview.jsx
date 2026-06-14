@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { DollarSign, Users, FileText, Shield, TrendingUp } from 'lucide-react';
+import { DollarSign, Users, FileText, Shield } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
+import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import { api } from '../../api/client';
 import { formatMoney } from '../../utils/format';
 
@@ -30,18 +31,17 @@ export default function AdminOverview() {
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
         {[
-          [DollarSign, 'Total Revenue', formatMoney(stats?.totalRevenue || 0), 'From all purchases', '+18% this month', true],
+          [DollarSign, 'Total Revenue', formatMoney(stats?.totalRevenue || 0), 'From all purchases'],
           [Users, 'Active Buyers', stats?.activeBuyers, 'Paying subscribers'],
           [FileText, 'Active Leads', stats?.activeLeads, `${stats?.totalLeads || 0} total listed`],
-          [Shield, 'Deals Closed', stats?.dealsClosed, 'Via platform leads', `${stats?.totalPurchases || 0} total purchases`, true],
-        ].map(([Icon, label, val, sub, trend, green]) => (
+          [Shield, 'Deals Closed', stats?.dealsClosed, `${stats?.totalPurchases || 0} total purchases`],
+        ].map(([Icon, label, val, sub]) => (
           <div key={label} className="bg-white p-5 rounded-2xl border border-gray-100">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{label}</p>
                 <p className="text-2xl font-bold mt-2">{val ?? '—'}</p>
                 <p className="text-xs text-gray-500 mt-1">{sub}</p>
-                {trend && <p className={`text-xs mt-1 flex items-center gap-1 ${green ? 'text-green-600' : ''}`}><TrendingUp size={12} />{trend}</p>}
               </div>
               <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
                 <Icon size={18} />
@@ -75,6 +75,8 @@ export default function AdminOverview() {
           </div>
         </div>
       </div>
+
+      <AttomPropertyFeed variant="dashboard" className="mt-8" />
     </DashboardLayout>
   );
 }

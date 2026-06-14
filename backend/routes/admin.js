@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import Lead from '../models/Lead.js';
 import Purchase from '../models/Purchase.js';
 import { protect, authorize } from '../middleware/auth.js';
+import { PLAN_LEADS } from '../config/plans.js';
 
 const router = express.Router();
 
@@ -44,11 +45,17 @@ router.get('/users', async (_req, res) => {
 
 router.put('/users/:id', async (req, res) => {
   try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { plan: req.body.plan, role: req.body.role, leadsRemaining: req.body.leadsRemaining },
-      { new: true }
-    ).select('-password');
+    const updates = {};
+    if (req.body.plan !== undefined) {
+      updates.plan = req.body.plan;
+      if (req.body.leadsRemaining === undefined && PLAN_LEADS[req.body.plan] !== undefined) {
+        updates.leadsRemaining = PLAN_LEADS[req.body.plan];
+      }
+    }
+    if (req.body.role !== undefined) updates.role = req.body.role;
+    if (req.body.leadsRemaining !== undefined) updates.leadsRemaining = req.body.leadsRemaining;
+
+    const user = await User.findByIdAndUpdate(req.params.id, updates, { new: true }).select('-password');
     res.json(user);
   } catch (err) {
     res.status(500).json({ message: err.message });

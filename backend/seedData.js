@@ -66,6 +66,13 @@ const leads = [
     ownerName: 'Patricia Moore', ownerPhone: '(407) 555-2234',
     address: '5600 Curry Ford Rd, Orlando, FL 32822', notes: 'Health-related move. Highly motivated.',
   },
+  {
+    city: 'Davie', state: 'FL', propertyType: 'Single Family', beds: 3, baths: 2, sqft: 1420,
+    leadType: 'distressed', tier: 'qualified', estValue: 278000, arv: 340000, repairCost: 26000, price: 189,
+    status: 'inactive',
+    ownerName: 'Kevin Brooks', ownerPhone: '(954) 555-3310',
+    address: '4100 SW 64th Ave, Davie, FL 33314', notes: 'Pending team verification.',
+  },
 ];
 
 export async function seedIfEmpty() {

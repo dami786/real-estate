@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Pencil, Plus, Trash2 } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
+import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import { api } from '../../api/client';
 import { formatPrice, typeLabel } from '../../utils/format';
 
@@ -14,16 +15,37 @@ export default function ManageLeads({ panel = 'admin' }) {
   const [leads, setLeads] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyLead);
+  const [editingId, setEditingId] = useState(null);
 
-  const load = () => api.getAdminLeads().then(setLeads);
+  const load = () => api.getStaffLeads().then(setLeads);
   useEffect(() => { load(); }, []);
 
-  const create = async (e) => {
+  const save = async (e) => {
     e.preventDefault();
-    await api.createLead({ ...form, estValue: +form.estValue, arv: +form.arv, price: +form.price, beds: +form.beds, baths: +form.baths, sqft: +form.sqft });
+    const payload = {
+      ...form,
+      estValue: +form.estValue,
+      arv: +form.arv,
+      price: +form.price,
+      beds: +form.beds,
+      baths: +form.baths,
+      sqft: +form.sqft,
+    };
+    if (editingId) {
+      await api.updateLead(editingId, payload);
+    } else {
+      await api.createLead(payload);
+    }
     setShowForm(false);
+    setEditingId(null);
     setForm(emptyLead);
     load();
+  };
+
+  const startEdit = (lead) => {
+    setForm({ ...emptyLead, ...lead });
+    setEditingId(lead._id);
+    setShowForm(true);
   };
 
   const remove = async (id) => {
@@ -39,13 +61,16 @@ export default function ManageLeads({ panel = 'admin' }) {
           <h1 className="text-2xl font-bold">Manage Leads</h1>
           <p className="text-gray-500 mt-1">{leads.length} leads in the system.</p>
         </div>
-        <button onClick={() => setShowForm(!showForm)} className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-sm">
+        <button
+          onClick={() => { setShowForm(!showForm); setEditingId(null); setForm(emptyLead); }}
+          className="flex items-center gap-2 px-4 py-2 bg-black text-white rounded-lg text-sm"
+        >
           <Plus size={16} /> Add Lead
         </button>
       </div>
 
       {showForm && (
-        <form onSubmit={create} className="mt-6 bg-white rounded-2xl border p-6 grid md:grid-cols-3 gap-4">
+        <form onSubmit={save} className="mt-6 bg-white rounded-2xl border p-6 grid md:grid-cols-3 gap-4">
           {['city', 'state', 'propertyType', 'ownerName', 'ownerPhone', 'address'].map((f) => (
             <input key={f} required={['city', 'state'].includes(f)} placeholder={f} value={form[f]}
               onChange={(e) => setForm({ ...form, [f]: e.target.value })}
@@ -62,7 +87,14 @@ export default function ManageLeads({ panel = 'admin' }) {
           <select value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })} className="px-3 py-2 border rounded-lg text-sm">
             {['basic', 'qualified', 'premium'].map((t) => <option key={t} value={t}>{t}</option>)}
           </select>
-          <button type="submit" className="md:col-span-3 py-2.5 bg-black text-white rounded-lg text-sm font-medium">Create Lead</button>
+          {panel === 'admin' && (
+            <select value={form.status || 'active'} onChange={(e) => setForm({ ...form, status: e.target.value })} className="px-3 py-2 border rounded-lg text-sm">
+              {['active', 'inactive', 'sold'].map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          )}
+          <button type="submit" className="md:col-span-3 py-2.5 bg-black text-white rounded-lg text-sm font-medium">
+            {editingId ? 'Update Lead' : 'Create Lead'}
+          </button>
         </form>
       )}
 
@@ -88,14 +120,25 @@ export default function ManageLeads({ panel = 'admin' }) {
                 <td className="px-6 py-4">{formatPrice(l.estValue)}</td>
                 <td className="px-6 py-4 font-bold">${l.price}</td>
                 <td className="px-6 py-4 capitalize">{l.status}</td>
-                <td className="px-6 py-4">
-                  <button onClick={() => remove(l._id)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
+                <td className="px-6 py-4 flex gap-2">
+                  <button onClick={() => startEdit(l)} className="text-gray-500 hover:text-gray-900"><Pencil size={16} /></button>
+                  {panel === 'admin' && (
+                    <button onClick={() => remove(l._id)} className="text-red-500 hover:text-red-700"><Trash2 size={16} /></button>
+                  )}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      <AttomPropertyFeed
+        variant="dashboard"
+        limit={3}
+        className="mt-8"
+        title="ATTOM Reference Data"
+        description="Use live property records when creating or validating marketplace leads."
+      />
     </DashboardLayout>
   );
 }

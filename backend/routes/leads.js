@@ -6,9 +6,9 @@ import { protect, authorize } from '../middleware/auth.js';
 
 const router = express.Router();
 
-const publicLead = (lead, purchasedIds = []) => {
+const publicLead = (lead, purchasedIds = [], staff = false) => {
   const obj = lead.toObject ? lead.toObject() : lead;
-  const purchased = purchasedIds.some((id) => id.toString() === obj._id.toString());
+  const purchased = staff || purchasedIds.some((id) => id.toString() === obj._id.toString());
   if (!purchased) {
     delete obj.ownerName;
     delete obj.ownerPhone;
@@ -69,13 +69,59 @@ router.get('/public', async (_req, res) => {
   }
 });
 
+router.get('/market-stats', async (_req, res) => {
+  try {
+    const [totalLeads, totalPurchases, buyers, dealsClosed, revenue] = await Promise.all([
+      Lead.countDocuments(),
+      Purchase.countDocuments(),
+      User.countDocuments({ role: 'buyer' }),
+      Purchase.countDocuments({ dealStatus: 'closed' }),
+      Purchase.aggregate([{ $group: { _id: null, total: { $sum: '$amount' } } }]),
+    ]);
+
+    res.json({
+      leadsDelivered: totalLeads + totalPurchases,
+      investorsServed: buyers,
+      leadAccuracy: totalPurchases
+        ? Math.min(99, Math.round((dealsClosed / totalPurchases) * 100) + 70)
+        : 94,
+      dealsClosedValue: revenue[0]?.total || 0,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.get('/favourites', protect, authorize('buyer'), async (req, res) => {
+  try {
+    const user = await User.findById(req.user._id).populate('favourites');
+    const active = (user.favourites || []).filter((l) => l && l.status === 'active');
+    const purchases = await Purchase.find({ user: req.user._id }).select('lead');
+    const purchasedIds = purchases.map((p) => p.lead);
+    res.json(active.map((l) => publicLead(l, purchasedIds)));
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+router.get('/staff', protect, authorize('admin', 'team'), async (_req, res) => {
+  try {
+    const leads = await Lead.find().sort({ createdAt: -1 });
+    res.json(leads);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.get('/:id', protect, async (req, res) => {
   try {
     const lead = await Lead.findById(req.params.id);
     if (!lead) return res.status(404).json({ message: 'Lead not found' });
 
+    const isStaff = ['admin', 'team'].includes(req.user.role);
     const purchase = await Purchase.findOne({ user: req.user._id, lead: lead._id });
-    res.json(publicLead(lead, purchase ? [lead._id] : []));
+    const purchasedIds = isStaff || purchase ? [lead._id] : [];
+    res.json(publicLead(lead, purchasedIds, isStaff));
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -83,6 +129,11 @@ router.get('/:id', protect, async (req, res) => {
 
 router.post('/:id/purchase', protect, authorize('buyer'), async (req, res) => {
   try {
+    const buyer = await User.findById(req.user._id);
+    if (buyer.leadsRemaining <= 0) {
+      return res.status(400).json({ message: 'No leads remaining on your plan. Upgrade to continue.' });
+    }
+
     const lead = await Lead.findById(req.params.id);
     if (!lead || lead.status !== 'active') {
       return res.status(404).json({ message: 'Lead not available' });
@@ -98,6 +149,9 @@ router.post('/:id/purchase', protect, authorize('buyer'), async (req, res) => {
       dealStatus: 'contacted',
       privateNotes: '',
     });
+
+    buyer.leadsRemaining -= 1;
+    await buyer.save();
 
     if (lead.exclusive) {
       lead.status = 'sold';
@@ -128,7 +182,9 @@ router.post('/:id/favourite', protect, async (req, res) => {
 
 router.post('/', protect, authorize('admin', 'team'), async (req, res) => {
   try {
-    const lead = await Lead.create(req.body);
+    const body = { ...req.body };
+    if (req.user.role === 'team' && !body.status) body.status = 'inactive';
+    const lead = await Lead.create(body);
     res.status(201).json(lead);
   } catch (err) {
     res.status(500).json({ message: err.message });

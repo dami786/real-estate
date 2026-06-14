@@ -15,11 +15,31 @@ async function request(path, options = {}) {
 
   try {
     const res = await fetch(`${API}${path}`, { ...options, headers });
-    const data = await res.json().catch(() => ({}));
+    const contentType = res.headers.get('content-type') || '';
+    const isJson = contentType.includes('application/json');
+
+    if (!isJson) {
+      throw new Error(
+        import.meta.env.PROD && !import.meta.env.VITE_API_URL
+          ? 'Backend not configured. Set VITE_API_URL in Vercel environment variables.'
+          : 'Unable to reach server. Please try again later.'
+      );
+    }
+
+    const data = await res.json().catch(() => null);
+    if (data === null) {
+      throw new Error('Invalid response from server.');
+    }
     if (!res.ok) throw new Error(data.message || 'Request failed');
     return data;
   } catch (err) {
-    if (err instanceof TypeError) throw new Error('Unable to reach server. Please try again later.');
+    if (err instanceof TypeError) {
+      throw new Error(
+        import.meta.env.PROD && !import.meta.env.VITE_API_URL
+          ? 'Backend not configured. Set VITE_API_URL in Vercel environment variables.'
+          : 'Unable to reach server. Please try again later.'
+      );
+    }
     throw err;
   }
 }
@@ -34,10 +54,13 @@ export const api = {
     request('/auth/profile', { method: 'PUT', body: JSON.stringify(body) }),
 
   getPublicLeads: () => request('/leads/public'),
+  getMarketStats: () => request('/leads/market-stats'),
   getLeads: (params) => {
     const q = new URLSearchParams(params).toString();
     return request(`/leads?${q}`);
   },
+  getFavouriteLeads: () => request('/leads/favourites'),
+  getStaffLeads: () => request('/leads/staff'),
   getLead: (id) => request(`/leads/${id}`),
   purchaseLead: (id) => request(`/leads/${id}/purchase`, { method: 'POST' }),
   toggleFavourite: (id) => request(`/leads/${id}/favourite`, { method: 'POST' }),
@@ -67,4 +90,10 @@ export const api = {
 
   subscribe: (email) =>
     request('/newsletter/subscribe', { method: 'POST', body: JSON.stringify({ email }) }),
+
+  getAttomProperties: (category = 'all', limit = 8) => {
+    const q = new URLSearchParams({ category, limit: String(limit) }).toString();
+    return request(`/attom/properties?${q}`);
+  },
+  getAttomCategories: () => request('/attom/categories'),
 };

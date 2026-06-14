@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Heart } from 'lucide-react';
 import DashboardLayout from '../../components/DashboardLayout';
+import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import LeadRow from '../../components/LeadRow';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../api/client';
@@ -9,24 +10,20 @@ export default function Favourites() {
   const { user, refreshUser } = useAuth();
   const [leads, setLeads] = useState([]);
 
-  useEffect(() => {
-    api.getLeads({}).then((all) => {
-      const favIds = user?.favourites?.map(String) || [];
-      setLeads(all.filter((l) => favIds.includes(l._id)));
-    });
-  }, [user?.favourites]);
+  const load = () => api.getFavouriteLeads().then(setLeads).catch(() => setLeads([]));
+
+  useEffect(() => { load(); }, [user?.favourites]);
 
   const purchase = async (id) => {
     await api.purchaseLead(id);
-    api.getLeads({}).then((all) => {
-      const favIds = user?.favourites?.map(String) || [];
-      setLeads(all.filter((l) => favIds.includes(l._id)));
-    });
+    await refreshUser();
+    load();
   };
 
   const favourite = async (id) => {
     await api.toggleFavourite(id);
-    refreshUser();
+    await refreshUser();
+    load();
   };
 
   return (
@@ -46,6 +43,14 @@ export default function Favourites() {
           ))}
         </div>
       )}
+
+      <AttomPropertyFeed
+        variant="dashboard"
+        limit={3}
+        className="mt-8"
+        title="Market Context"
+        description="Review live ATTOM records while evaluating your saved leads."
+      />
     </DashboardLayout>
   );
 }

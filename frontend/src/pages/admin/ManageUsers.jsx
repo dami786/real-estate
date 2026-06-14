@@ -5,13 +5,12 @@ import { api } from '../../api/client';
 export default function ManageUsers() {
   const [users, setUsers] = useState([]);
 
-  useEffect(() => {
-    api.getUsers().then(setUsers);
-  }, []);
+  const load = () => api.getUsers().then(setUsers);
+  useEffect(() => { load(); }, []);
 
-  const updatePlan = async (id, plan) => {
-    await api.updateUser(id, { plan });
-    api.getUsers().then(setUsers);
+  const updateUser = async (id, changes) => {
+    await api.updateUser(id, changes);
+    load();
   };
 
   return (
@@ -35,14 +34,26 @@ export default function ManageUsers() {
               <tr key={u._id} className="border-t border-gray-50">
                 <td className="px-6 py-4 font-medium">{u.name}</td>
                 <td className="px-6 py-4 text-gray-500">{u.email}</td>
-                <td className="px-6 py-4 capitalize">{u.role}</td>
                 <td className="px-6 py-4">
-                  <select value={u.plan} onChange={(e) => updatePlan(u._id, e.target.value)}
+                  <select value={u.role} onChange={(e) => updateUser(u._id, { role: e.target.value })}
+                    className="text-sm border rounded px-2 py-1 capitalize">
+                    {['buyer', 'admin', 'team'].map((r) => <option key={r} value={r}>{r}</option>)}
+                  </select>
+                </td>
+                <td className="px-6 py-4">
+                  <select value={u.plan} onChange={(e) => updateUser(u._id, { plan: e.target.value })}
                     className="text-sm border rounded px-2 py-1 capitalize">
                     {['none', 'basic', 'pro', 'enterprise'].map((p) => <option key={p} value={p}>{p}</option>)}
                   </select>
                 </td>
-                <td className="px-6 py-4">{u.leadsRemaining}</td>
+                <td className="px-6 py-4">
+                  <input
+                    type="number"
+                    defaultValue={u.leadsRemaining}
+                    onBlur={(e) => updateUser(u._id, { leadsRemaining: +e.target.value })}
+                    className="w-20 text-sm border rounded px-2 py-1"
+                  />
+                </td>
               </tr>
             ))}
           </tbody>

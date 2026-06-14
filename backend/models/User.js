@@ -14,6 +14,11 @@ const userSchema = new mongoose.Schema(
     bio: String,
     favourites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Lead' }],
     leadsRemaining: { type: Number, default: 0 },
+    preferences: {
+      emailNotifications: { type: Boolean, default: true },
+      smsAlerts: { type: Boolean, default: false },
+      weeklyDigest: { type: Boolean, default: true },
+    },
   },
   { timestamps: true }
 );

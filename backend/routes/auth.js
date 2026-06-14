@@ -2,6 +2,7 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import { protect } from '../middleware/auth.js';
+import { PLAN_LEADS } from '../config/plans.js';
 
 const router = express.Router();
 
@@ -24,6 +25,7 @@ const sendUser = (user, res, status = 200) => {
       bio: user.bio,
       favourites: user.favourites,
       leadsRemaining: user.leadsRemaining,
+      preferences: user.preferences,
     },
   });
 };
@@ -75,6 +77,22 @@ router.put('/profile', protect, async (req, res) => {
     fields.forEach((f) => {
       if (req.body[f] !== undefined) req.user[f] = req.body[f];
     });
+
+    if (req.body.preferences) {
+      req.user.preferences = {
+        ...req.user.preferences?.toObject?.() || req.user.preferences || {},
+        ...req.body.preferences,
+      };
+    }
+
+    if (req.body.plan && req.user.role === 'buyer') {
+      const plan = req.body.plan;
+      if (['basic', 'pro', 'enterprise'].includes(plan)) {
+        req.user.plan = plan;
+        req.user.leadsRemaining = PLAN_LEADS[plan] ?? req.user.leadsRemaining;
+      }
+    }
+
     await req.user.save();
     res.json({ user: req.user });
   } catch (err) {

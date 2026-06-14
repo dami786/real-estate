@@ -7,8 +7,9 @@ import {
 } from 'lucide-react';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
+import AttomPropertyFeed from '../components/AttomPropertyFeed';
 import { api } from '../api/client';
-import { formatPrice, typeLabel, tierLabel } from '../utils/format';
+import { formatMoney, formatPrice, typeLabel, tierLabel } from '../utils/format';
 import {
   MISSION, GEO_FOCUS, HIGH_VALUE_LEADS, PREMIUM_LEAD_TRAITS,
   USP, REVENUE_MODEL, WORKFLOW_STEPS,
@@ -100,10 +101,32 @@ function HeroPreview() {
 export default function Home() {
   const navigate = useNavigate();
   const [leads, setLeads] = useState([]);
+  const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    api.getPublicLeads().then(setLeads).catch(() => {});
+    api.getPublicLeads()
+      .then((data) => setLeads(Array.isArray(data) ? data : []))
+      .catch(() => setLeads([]));
+    api.getMarketStats()
+      .then((data) => {
+        if (data && typeof data.leadsDelivered === 'number') setStats(data);
+      })
+      .catch(() => {});
   }, []);
+
+  const statCards = stats
+    ? [
+        [`${stats.leadsDelivered.toLocaleString()}+`, 'Leads Delivered'],
+        [`${stats.investorsServed.toLocaleString()}+`, 'Investors Served'],
+        [`${stats.leadAccuracy}%`, 'Lead Accuracy'],
+        [formatMoney(stats.dealsClosedValue ?? 0), 'Deals Closed'],
+      ]
+    : [
+        ['—', 'Leads Delivered'],
+        ['—', 'Investors Served'],
+        ['—', 'Lead Accuracy'],
+        ['—', 'Deals Closed'],
+      ];
 
   return (
     <div className="min-h-screen bg-white">
@@ -111,10 +134,10 @@ export default function Home() {
 
       {/* Hero */}
       <section className="hero-mesh relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-24 lg:pt-20 lg:pb-32">
-          <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-14 lg:pt-16 lg:pb-20">
+          <div className="grid lg:grid-cols-2 gap-10 lg:gap-12 items-center">
             <div>
-              <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 border border-slate-200/80 shadow-sm text-sm text-slate-600 mb-8 backdrop-blur-sm">
+              <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-white/80 border border-slate-200/80 shadow-sm text-sm text-slate-600 mb-6 backdrop-blur-sm">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 pulse-dot" />
                 <span className="font-medium">New verified leads added daily</span>
                 <ArrowRight size={14} className="text-slate-400" />
@@ -125,18 +148,18 @@ export default function Home() {
                 <br />
                 Close More Deals.
               </h1>
-              <p className="mt-6 text-lg text-slate-500 leading-relaxed max-w-xl">
+              <p className="mt-5 text-lg text-slate-500 leading-relaxed max-w-xl">
                 {MISSION} Based in <strong className="text-slate-700">{GEO_FOCUS.primary}</strong>, expanding across the U.S. — pre-qualified off-market leads, not just raw data.
               </p>
-              <div className="mt-9 flex flex-wrap gap-4">
+              <div className="mt-7 flex flex-wrap gap-4">
                 <button onClick={() => navigate('/auth?mode=signup')} className="btn-primary">
                   Start Free Trial <ArrowRight size={18} />
                 </button>
-                <button onClick={() => navigate('/auth')} className="btn-secondary">
+                <button onClick={() => navigate('/#attom-properties')} className="btn-secondary">
                   View Sample Leads
                 </button>
               </div>
-              <div className="mt-8 flex flex-wrap gap-x-8 gap-y-3 text-sm text-slate-500">
+              <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
                 {['No contracts', 'Cancel anytime', 'Verified leads guaranteed'].map((t) => (
                   <span key={t} className="flex items-center gap-2 font-medium">
                     <span className="flex items-center justify-center w-5 h-5 rounded-full bg-emerald-100">
@@ -155,11 +178,11 @@ export default function Home() {
       </section>
 
       {/* Stats */}
-      <section className="relative -mt-8 z-10 pb-4">
+      <section className="relative -mt-6 z-10 pb-2">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
-            {[['12,400+', 'Leads Delivered'], ['3,800+', 'Investors Served'], ['94%', 'Lead Accuracy'], ['$2.1M+', 'Deals Closed']].map(([v, l]) => (
-              <div key={l} className="bg-white rounded-2xl border border-slate-100 p-6 lg:p-8 text-center shadow-lg shadow-slate-900/5 card-lift">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
+            {statCards.map(([v, l]) => (
+              <div key={l} className="bg-white rounded-2xl border border-slate-100 p-5 lg:p-6 text-center shadow-lg shadow-slate-900/5 card-lift">
                 <p className="text-3xl lg:text-4xl font-extrabold text-slate-900 tracking-tight">{v}</p>
                 <p className="text-sm text-slate-500 mt-2 font-medium">{l}</p>
               </div>
@@ -168,14 +191,16 @@ export default function Home() {
         </div>
       </section>
 
+      <AttomPropertyFeed />
+
       {/* Live Marketplace */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="section-badge mb-4">Live Marketplace</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-4">
+      <section className="page-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="section-header">
+          <span className="section-badge">Live Marketplace</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Available Leads Right Now
           </h2>
-          <p className="text-slate-500 mt-3">South Florida leads live now — unlock seller contact, ARV & repair analysis.</p>
+          <p>South Florida leads live now — unlock seller contact, ARV & repair analysis.</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-200/80 shadow-xl shadow-slate-900/5 overflow-hidden">
@@ -220,14 +245,14 @@ export default function Home() {
       </section>
 
       {/* Lead Types */}
-      <section className="bg-slate-50/80 py-24">
+      <section className="page-section bg-slate-50/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <span className="section-badge mb-4">Lead Types</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-4">
+          <div className="section-header">
+            <span className="section-badge">Lead Types</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
               Every Category of Motivated Seller
             </h2>
-            <p className="text-slate-500 mt-3">High-value distressed property leads — what separates us from basic data sellers.</p>
+            <p>High-value distressed property leads — what separates us from basic data sellers.</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {HIGH_VALUE_LEADS.map((l) => (
@@ -237,7 +262,7 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <div className="mt-10 p-8 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 text-white">
+          <div className="mt-8 p-6 lg:p-7 rounded-2xl bg-gradient-to-r from-teal-600 to-emerald-600 text-white">
             <h3 className="text-xl font-bold">Premium Leads — Where the Real Money Is Made</h3>
             <ul className="mt-4 grid sm:grid-cols-3 gap-4">
               {PREMIUM_LEAD_TRAITS.map((t) => (
@@ -247,7 +272,7 @@ export default function Home() {
               ))}
             </ul>
           </div>
-          <p className="text-center mt-8">
+          <p className="text-center mt-6">
             <button onClick={() => navigate('/lead-guide')} className="text-sm font-semibold text-teal-600 hover:text-teal-800 hover:underline">
               Read full business & lead guide →
             </button>
@@ -256,12 +281,12 @@ export default function Home() {
       </section>
 
       {/* How it works */}
-      <section id="how-it-works" className="py-24">
+      <section id="how-it-works" className="page-section">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <span className="section-badge mb-4">The System</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-4">How REALIST Works</h2>
-            <p className="text-slate-500 mt-3">From raw data to closed deal — a streamlined 6-step pipeline.</p>
+          <div className="section-header">
+            <span className="section-badge">The System</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">How REALIST Works</h2>
+            <p>From raw data to closed deal — a streamlined 6-step pipeline.</p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
             {steps.map((s) => (
@@ -282,10 +307,10 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <span className="section-badge mb-4">Why REALIST</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-4">
+      <section id="features" className="page-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="section-header">
+          <span className="section-badge">Why REALIST</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             Our Unique Selling Proposition
           </h2>
         </div>
@@ -303,12 +328,12 @@ export default function Home() {
       </section>
 
       {/* Pricing */}
-      <section id="pricing" className="bg-slate-50/80 py-24">
+      <section id="pricing" className="page-section bg-slate-50/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center max-w-2xl mx-auto mb-14">
-            <span className="section-badge mb-4">Pricing</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-4">Simple, Transparent Pricing</h2>
-            <p className="text-slate-500 mt-3">
+          <div className="section-header">
+            <span className="section-badge">Pricing</span>
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Simple, Transparent Pricing</h2>
+            <p>
             Per-lead: Basic {REVENUE_MODEL.perLead.basic.range} · Qualified {REVENUE_MODEL.perLead.qualified.range} · Exclusive {REVENUE_MODEL.perLead.exclusive.range}
           </p>
           </div>
@@ -356,21 +381,21 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <p className="text-center text-sm text-slate-500 mt-10 font-medium">
+          <p className="text-center text-sm text-slate-500 mt-8 font-medium">
             Optional revenue share: 10%–30% of closed deal value · <button onClick={() => navigate('/lead-guide')} className="text-teal-600 hover:underline">View full pricing guide</button>
           </p>
         </div>
       </section>
 
       {/* Testimonials */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
-        <div className="text-center max-w-2xl mx-auto mb-14">
-          <span className="section-badge mb-4">Testimonials</span>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight mt-4">Investors Love REALIST</h2>
+      <section className="page-section max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="section-header">
+          <span className="section-badge">Testimonials</span>
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">Investors Love REALIST</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {testimonials.map((t) => (
-            <div key={t.name} className="relative bg-white p-8 rounded-2xl border border-slate-100 shadow-lg shadow-slate-900/5 card-lift">
+            <div key={t.name} className="relative bg-white p-6 lg:p-7 rounded-2xl border border-slate-100 shadow-lg shadow-slate-900/5 card-lift">
               <Quote size={32} className="text-teal-100 absolute top-6 right-6" />
               <div className="flex gap-1 mb-5">
                 {[...Array(5)].map((_, i) => (
@@ -394,12 +419,12 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section className="cta-gradient text-white py-24 relative overflow-hidden">
+      <section className="cta-gradient text-white py-16 lg:py-20 relative overflow-hidden">
         <div className="absolute inset-0 opacity-30" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, rgba(13,148,136,0.4) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(59,130,246,0.3) 0%, transparent 50%)' }} />
         <div className="max-w-3xl mx-auto text-center px-4 relative">
           <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight">Ready to Find Your Next Deal?</h2>
           <p className="mt-4 text-slate-300 text-lg">Join 3,800+ investors using REALIST to find motivated sellers and close deals faster.</p>
-          <div className="mt-10 flex flex-wrap justify-center gap-4">
+          <div className="mt-8 flex flex-wrap justify-center gap-4">
             <button
               onClick={() => navigate('/auth?mode=signup')}
               className="px-8 py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 shadow-xl transition-all hover:-translate-y-0.5"

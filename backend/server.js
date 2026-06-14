@@ -8,6 +8,7 @@ import purchaseRoutes from './routes/purchases.js';
 import adminRoutes from './routes/admin.js';
 import notificationRoutes from './routes/notifications.js';
 import newsletterRoutes from './routes/newsletter.js';
+import attomRoutes from './routes/attom.js';
 import { seedIfEmpty } from './seedData.js';
 
 dotenv.config();
@@ -17,7 +18,14 @@ const PORT = process.env.PORT || 5000;
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin(origin, callback) {
+      const allowed = process.env.CLIENT_URL || 'http://localhost:5173';
+      if (!origin || origin === allowed || /\.vercel\.app$/.test(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
   })
 );
@@ -31,6 +39,7 @@ app.use('/api/purchases', purchaseRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/newsletter', newsletterRoutes);
+app.use('/api/attom', attomRoutes);
 
 connectDB()
   .then(() => seedIfEmpty())

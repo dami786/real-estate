@@ -13,6 +13,15 @@ router.get('/', protect, async (req, res) => {
   }
 });
 
+router.put('/read-all', protect, async (req, res) => {
+  try {
+    await Notification.updateMany({ user: req.user._id }, { read: true });
+    res.json({ message: 'All marked as read' });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 router.put('/:id/read', protect, async (req, res) => {
   try {
     await Notification.findOneAndUpdate(
@@ -20,15 +29,6 @@ router.put('/:id/read', protect, async (req, res) => {
       { read: true }
     );
     res.json({ message: 'Marked as read' });
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-});
-
-router.put('/read-all', protect, async (req, res) => {
-  try {
-    await Notification.updateMany({ user: req.user._id }, { read: true });
-    res.json({ message: 'All marked as read' });
   } catch (err) {
     res.status(500).json({ message: err.message });
   }

@@ -21,8 +21,8 @@ export default function Footer() {
 
   return (
     <footer className="bg-slate-50 border-t border-slate-100">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-2">
             <Logo />
             <p className="mt-4 text-sm text-gray-500 max-w-sm">
@@ -62,7 +62,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-12 p-8 bg-white rounded-2xl border border-slate-100 shadow-lg shadow-slate-900/5">
+        <div className="mt-8 p-6 lg:p-7 bg-white rounded-2xl border border-slate-100 shadow-lg shadow-slate-900/5">
           <h4 className="font-semibold">Stay ahead of the market</h4>
           <p className="text-sm text-gray-500 mt-1">Get new leads and market insights delivered weekly.</p>
           <form onSubmit={subscribe} className="mt-4 flex gap-2">

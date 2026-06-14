@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Home, CheckCircle, Clock, DollarSign, User, Phone, MapPin, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import DashboardLayout from '../../components/DashboardLayout';
+import AttomPropertyFeed from '../../components/AttomPropertyFeed';
 import { api } from '../../api/client';
 import { formatMoney, formatPrice, statusLabel, statusColors } from '../../utils/format';
 
@@ -101,6 +102,14 @@ export default function MyLeads() {
           </div>
         ))}
       </div>
+
+      <AttomPropertyFeed
+        variant="dashboard"
+        limit={3}
+        className="mt-8"
+        title="Comparable Market Data"
+        description="Cross-check your purchased leads against live foreclosure, mortgage, and equity signals."
+      />
     </DashboardLayout>
   );
 }

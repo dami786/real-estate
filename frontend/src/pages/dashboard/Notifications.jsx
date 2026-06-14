@@ -14,6 +14,11 @@ export default function Notifications() {
     setNotifications((n) => n.map((x) => ({ ...x, read: true })));
   };
 
+  const markOne = async (id) => {
+    await api.markRead(id);
+    setNotifications((n) => n.map((x) => (x._id === id ? { ...x, read: true } : x)));
+  };
+
   return (
     <DashboardLayout title="Notifications">
       <div className="flex items-center justify-between">
@@ -26,7 +31,12 @@ export default function Notifications() {
 
       <div className="mt-6 space-y-3">
         {notifications.map((n) => (
-          <div key={n._id} className={`bg-white rounded-xl border p-4 ${n.read ? 'border-gray-100 opacity-60' : 'border-teal-200 bg-teal-50/30'}`}>
+          <button
+            key={n._id}
+            type="button"
+            onClick={() => !n.read && markOne(n._id)}
+            className={`w-full text-left bg-white rounded-xl border p-4 ${n.read ? 'border-gray-100 opacity-60' : 'border-teal-200 bg-teal-50/30'}`}
+          >
             <div className="flex items-start justify-between">
               <div>
                 <p className="font-medium">{n.title}</p>
@@ -34,7 +44,7 @@ export default function Notifications() {
               </div>
               <span className="text-xs text-gray-400">{new Date(n.createdAt).toLocaleDateString()}</span>
             </div>
-          </div>
+          </button>
         ))}
         {notifications.length === 0 && <p className="text-gray-400 text-center py-12">No notifications.</p>}
       </div>
